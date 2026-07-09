@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from src.schemas.user import UserCreate
+from src.schemas.user import UserCreate, UserUpdate
 from src.repositories.user import UserRepository
 from src.security import hash_password, verify_password, ALGORITHM, ACCESS_TOKEN_EXPIRY, SECRET_KEY, create_access_token
 from jose import jwt, JWTError
@@ -9,12 +9,14 @@ class UserService:
     def __init__(self, db: Session):
         self.repository = UserRepository(db)
     
-    def register_user(self, user_data: UserCreate):
+    def register_user(self, user_data: UserCreate, roles: list[str]=None):
+        if roles is None:
+            roles = ["user"]
         existing_user = self.repository.get_by_email(email=user_data.email)
         if existing_user:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
         hashed_password = hash_password(user_data.password)
-        return self.repository.create(user_data, hashed_password)
+        return self.repository.create(user_data, hashed_password, roles)
     
     def get_users(self):
         return self.repository.get_users()
@@ -52,3 +54,9 @@ class UserService:
         if user is None:
             raise credentials_exception
         return user
+    
+    def update_user(self, user_id: int, update_payload: UserUpdate):
+        db_user = self.repository.get_by_id(user_id)
+        if not db_user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        return self.repository.update(db_user, update_payload)

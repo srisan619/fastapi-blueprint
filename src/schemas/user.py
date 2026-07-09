@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 class UserBase(BaseModel):
     username: str
@@ -7,8 +7,21 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
+class UserUpdate(UserBase):
+    username: str | None = None
+    email: EmailStr | None = None
+    is_active: str | None = Field(default=None, pattern="^[YN]$")
+    roles: list[str] | None = None
+
+class RoleResponse(BaseModel):
+    id: int
+    name: str
+    class config:
+        from_attributes = True
+
 class UserResponse(UserBase):
     id: int
+    roles: list[RoleResponse] = []
     class Config:
         from_attributes = True
 
