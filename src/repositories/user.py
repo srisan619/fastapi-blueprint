@@ -56,3 +56,25 @@ class UserRepository:
     def search_by_username(self, username_query: str) -> list[UserModel]:
         return self.db.query(UserModel).filter(UserModel.username.contains(username_query)).all()
     
+    def get_role_by_name(self, rolename: str) -> RoleModel | None:
+        return self.db.query(RoleModel).filter(RoleModel.name == rolename).first()
+    
+    def create_role(self, rolename: str) -> RoleModel:
+        role = RoleModel(name = rolename)
+        self.db.add(role)
+        self.db.commit()
+        self.db.refresh(role)
+        return role
+    
+    def assign_roles(self, db_user: UserModel, role_names: list[str]) -> UserModel:
+        db_user.roles.clear()
+        for name in role_names:
+            role_obj = self.find_or_create_role(name)
+            db_user.roles.append(role_obj)
+        self.db.add(db_user)
+        self.db.commit()
+        self.db.refresh(db_user)
+        return db_user
+
+
+    

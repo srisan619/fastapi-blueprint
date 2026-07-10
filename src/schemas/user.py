@@ -13,6 +13,13 @@ class UserUpdate(UserBase):
     is_active: str | None = Field(default=None, pattern="^[YN]$")
     roles: list[str] | None = None
 
+class RoleCreate(BaseModel):
+    name: str
+
+class RoleAssign(BaseModel):
+    user_id: int
+    roles: list[str] #eg. ['admin', 'auditor']
+
 class RoleResponse(BaseModel):
     id: int
     name: str
