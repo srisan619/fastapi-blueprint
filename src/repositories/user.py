@@ -17,8 +17,9 @@ class UserRepository:
         if not role:
             role = RoleModel(name=role_name)
             self.db.add(role)
-            self.db.commit()
-            self.db.refresh(role)
+            # self.db.commit()
+            self.db.flush()
+            # self.db.refresh(role)
         return role
 
     def create(self, user_data: UserCreate, hashed_password: str, role_names: list[str]) -> UserModel:
@@ -35,7 +36,7 @@ class UserRepository:
         self.db.refresh(db_user)
         return db_user
     
-    def update(self, update_data: UserUpdate, db_user: UserModel) -> UserModel:
+    def update(self, db_user: UserModel, update_data: UserUpdate) -> UserModel:
         data_dict = update_data.model_dump(exclude_unset=True)
         if "roles" in data_dict:
             new_role_names = data_dict.pop("roles")

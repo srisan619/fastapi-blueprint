@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from src.schemas.user import UserCreate, UserUpdate, RoleAssign
+from src.schemas.user import UserCreate, UserUpdate, RoleAssign, ProfileUpdate
 from src.repositories.user import UserRepository
 from src.security import hash_password, verify_password, ALGORITHM, ACCESS_TOKEN_EXPIRY, SECRET_KEY, create_access_token
 from jose import jwt, JWTError
@@ -31,7 +31,8 @@ class UserService:
         )
         if not user or not verify_password(password, user.hashed_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
-        
+        if user.is_active == "N":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is deactivated")
         access_token = create_access_token(data= {"sub": user.username})
         return {"access_token": access_token, "token_type": "Bearer"}
     
@@ -53,6 +54,8 @@ class UserService:
         user = next((u for u in users if username == u.username), None)
         if user is None:
             raise credentials_exception
+        if user.is_active == "N":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is deactivated")
         return user
     
     def update_user(self, user_id: int, update_payload: UserUpdate):
@@ -73,3 +76,20 @@ class UserService:
         if not db_user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="user not found")
         return self.repository.assign_roles(db_user, payload.roles)
+    
+    def update_my_profile(self, db_user, payload: ProfileUpdate):
+        if not verify_password(payload.current_password, db_user.hashed_password):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect password")
+        if payload.username:
+            db_user.username = payload.username
+        if payload.email:
+            #checking if another user using the same email address
+            existing_user = self.repository.get_by_email(payload.email)
+            if existing_user and existing_user.id != db_user.id:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already existing")
+            db_user.email = payload.email
+        if payload.current_password:
+            db_user.hashed_password = hash_password(payload.current_password)
+        self.repository.db.commit()
+        self.repository.db.refresh(db_user)
+        return db_user

@@ -13,6 +13,12 @@ class UserUpdate(UserBase):
     is_active: str | None = Field(default=None, pattern="^[YN]$")
     roles: list[str] | None = None
 
+class ProfileUpdate(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
+    current_password: str
+    new_password: str | None = None
+
 class RoleCreate(BaseModel):
     name: str
 
@@ -23,12 +29,13 @@ class RoleAssign(BaseModel):
 class RoleResponse(BaseModel):
     id: int
     name: str
-    class config:
+    class Config:
         from_attributes = True
 
 class UserResponse(UserBase):
     id: int
-    roles: list[RoleResponse] = []
+    is_active: str
+    roles: list[RoleResponse] = []    
     class Config:
         from_attributes = True
 
