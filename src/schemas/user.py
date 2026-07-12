@@ -22,6 +22,9 @@ class ProfileUpdate(BaseModel):
 class RoleCreate(BaseModel):
     name: str
 
+class RoleUpdate(BaseModel):
+    name: str
+
 class RoleAssign(BaseModel):
     user_id: int
     roles: list[str] #eg. ['admin', 'auditor']

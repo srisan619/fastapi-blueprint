@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from src.schemas.user import UserCreate, UserUpdate, RoleAssign, ProfileUpdate
+from src.schemas.user import UserCreate, UserUpdate, RoleAssign, ProfileUpdate, RoleUpdate
 from src.repositories.user import UserRepository
 from src.security import hash_password, verify_password, ALGORITHM, ACCESS_TOKEN_EXPIRY, SECRET_KEY, create_access_token
 from jose import jwt, JWTError
@@ -70,6 +70,15 @@ class UserService:
             return self.repository.create_role(rolename)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role already exists")
+        
+    def update_role(self, role_id: int, payload: RoleUpdate):
+        role = self.repository.get_role_id(role_id)
+        if not role:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Role not found")
+        existing_role = self.repository.get_role_by_name(payload.name)
+        if existing_role and existing_role.id != role_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Role name already exists")
+        return self.repository.update_role(role, payload.name)
     
     def assign_roles(self, payload: RoleAssign):
         db_user = self.repository.get_by_id(payload.user_id)

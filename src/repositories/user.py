@@ -67,6 +67,15 @@ class UserRepository:
         self.db.refresh(role)
         return role
     
+    def get_role_id(self, role_id: int) -> RoleModel|None:
+        return self.db.query(RoleModel).filter(RoleModel.id == role_id).first()
+    
+    def update_role(self, db_role: RoleModel, rolename: str) -> RoleModel:
+        db_role.name = rolename
+        self.db.commit()
+        self.db.refresh(db_role)
+        return db_role
+    
     def assign_roles(self, db_user: UserModel, role_names: list[str]) -> UserModel:
         db_user.roles.clear()
         for name in role_names:

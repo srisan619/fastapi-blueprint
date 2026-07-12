@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, Query, HTTPException
 from sqlalchemy.orm import Session
 from src.services.user import UserService
 from src.config.database import get_db
-from src.schemas.user import UserCreate, UserResponse, Token, UserUpdate, RoleResponse, RoleCreate, RoleAssign, ProfileUpdate
+from src.schemas.user import UserCreate, UserResponse, Token, UserUpdate, RoleResponse, RoleCreate, RoleAssign, ProfileUpdate, RoleUpdate
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 
@@ -63,6 +63,11 @@ def update_user(user_id: int, update: UserUpdate, db: Session=Depends(get_db), d
 def create_role(new_role: RoleCreate, db: Session=Depends(get_db)):
     user_service = UserService(db)
     return user_service.add_new_role(new_role.name)
+
+@router.put("/roles/{role_id}", response_model=RoleResponse, status_code=status.HTTP_201_CREATED, dependencies=[Depends(admin_only)])
+def update_role(role_id: int, payload: RoleUpdate, db: Session=Depends(get_db)):
+    user_service = UserService(db)
+    return user_service.update_role(role_id, payload)
 
 @router.post("/roles/assign", response_model=UserResponse, dependencies=[Depends(admin_only)])
 def assign_role_to_user(payload: RoleAssign, db: Session = Depends(get_db)):
