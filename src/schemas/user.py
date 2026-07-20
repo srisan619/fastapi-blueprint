@@ -32,14 +32,14 @@ class RoleAssign(BaseModel):
 class RoleResponse(BaseModel):
     id: int
     name: str
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 class UserResponse(UserBase):
     id: int
     is_active: str
     roles: list[RoleResponse] = []    
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 class Token(BaseModel):
